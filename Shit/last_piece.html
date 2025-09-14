@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just For You!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-pacifico { font-family: 'Pacifico', cursive; }
+        #bg-video {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover; z-index: -2;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .pulse-heart-icon { animation: pulse 2s ease-in-out infinite; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 1s ease-out forwards; }
+        
+        /* Fallback for mobile where video is hidden */
+        @media (max-width: 767px) {
+            #bg-video {
+                display: none;
+            }
+            body {
+                background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex items-center justify-center p-4 bg-black">
+    <video autoplay loop muted playsinline id="bg-video">
+        <source src="Pastel_Video_With_Floating_Hearts.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="fixed top-0 left-0 w-full h-full bg-rose-900/20 z-[-1]"></div>
+    
+    <div class="relative z-10 w-full max-w-2xl mx-auto bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl shadow-pink-300/20 p-8 text-center border border-pink-200/80 animate-fade-in-up">
+        
+        <div class="mb-6 pulse-heart-icon">
+            <svg class="w-24 h-24 mx-auto drop-shadow-lg" viewBox="0 0 24 24" fill="url(#heart-gradient)">
+                <defs>
+                    <linearGradient id="heart-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#EC4899; stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#E11D48; stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </div>
+        
+        <h1 class="font-pacifico text-4xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500 mb-4 drop-shadow-sm">
+            Happy Birthday Again!!!
+        </h1>
+        
+        <p class="text-gray-700 text-lg md:text-xl mb-8">
+            It might sound a little cheesy, but your smile is just incredibly warm. It’s like you have this knack for making everything feel a bit brighter without even trying. It’s such a rare gift.
+        </p>
+        
+        <div class="mt-4 pt-4 border-t border-pink-200/60">
+            <p class="text-gray-600 text-md">The World Got Lucky Since</p>
+            <p id="day-counter" class="font-bold text-pink-600 text-4xl tracking-widest">0 days</p>
+        </div>
+        
+        <div class="mt-8">
+            <a href="end.html" class="inline-block px-8 py-4 text-xl font-bold text-white bg-gradient-to-br from-pink-500 to-rose-500 rounded-full shadow-lg shadow-pink-500/30 transform transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-xl hover:shadow-pink-500/50 focus:outline-none focus:ring-4 focus:ring-pink-300" title="Click me!">
+                Click It!
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dayCounterEl = document.getElementById('day-counter');
+            // Ensure the date is set correctly for the calculation
+            const startDate = new Date('2008-09-19T00:00:00');
+            const today = new Date();
+            const diffTime = Math.abs(today - startDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Function to animate the number counter
+            const animateCounter = (element, targetValue, duration) => {
+                let currentValue = 0;
+                const increment = targetValue / (duration / 16); // 16ms for ~60fps
+                const interval = setInterval(() => {
+                    currentValue += increment;
+                    if (currentValue >= targetValue) {
+                        element.textContent = `${targetValue.toLocaleString()} days`;
+                        clearInterval(interval);
+                    } else {
+                        element.textContent = `${Math.floor(currentValue).toLocaleString()} days`;
+                    }
+                }, 16);
+            };
+
+            // Start the counter animation after the main content fades in
+            setTimeout(() => {
+                animateCounter(dayCounterEl, diffDays, 2000); // Animate over 2 seconds
+            }, 800); 
+        });
+    </script>
+</body>
+</html>

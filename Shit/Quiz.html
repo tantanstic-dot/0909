@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Fun Birthday Quiz!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-fredoka { font-family: 'Fredoka One', cursive; }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-gradient {
+            background: linear-gradient(-45deg, #a78bfa, #f472b6, #fb923c, #facc15);
+            background-size: 400% 400%;
+            animation: gradient-animation 15s ease infinite;
+        }
+        .quiz-option:hover:not(:disabled) { transform: scale(1.05); background-color: #fde047; }
+        .correct { background-color: #4ade80 !important; color: white !important; }
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-box { transition: transform 0.3s ease, opacity 0.3s ease; }
+        #answers { position: relative; min-height: 120px; }
+        .moving-button { position: absolute; transition: top 0.3s ease-out, left 0.3s ease-out; }
+    </style>
+</head>
+<body class="animated-gradient text-white min-h-screen flex items-center justify-center p-4">
+    <div id="quiz-container" class="w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 text-center">
+        <div id="quiz-content">
+            <h2 id="question" class="font-fredoka text-3xl md:text-4xl text-white mb-8 drop-shadow-md">Quiz Question Here</h2>
+            <div id="answers" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="action-buttons" class="mt-6 flex justify-center gap-4"></div>
+        </div>
+        <div id="result-container" class="hidden">
+             <h2 class="font-fredoka text-4xl md:text-5xl text-white mb-4 drop-shadow-md">Quiz Complete!</h2>
+             <p id="score" class="text-white/90 text-2xl mb-8"></p>
+             <button id="redirect-btn" class="font-bold bg-yellow-400 text-purple-800 px-8 py-3 rounded-xl shadow-lg hover:bg-yellow-300 transform hover:scale-105 transition-transform duration-300">
+                 Click It
+             </button>
+        </div>
+    </div>
+    <div id="wrong-answer-modal" class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div class="modal-box bg-white rounded-2xl shadow-2xl p-8 text-center max-w-sm w-full text-gray-800 transform scale-95 opacity-0">
+            <h3 class="font-fredoka text-2xl text-red-500 mb-4">Oops!</h3>
+            <p class="mb-6">Galat option tick maaraa aapne aunty jiiii</p>
+            <button class="modal-close-btn font-bold bg-red-500 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-red-600">Try Again</button>
+        </div>
+    </div>
+    <div id="skip-warning-modal" class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div class="modal-box bg-white rounded-2xl shadow-2xl p-8 text-center max-w-sm w-full text-gray-800 transform scale-95 opacity-0">
+            <h3 class="font-fredoka text-2xl text-yellow-500 mb-4">Hey!</h3>
+            <p class="mb-6">Aeeee chiii chiiiiii shrm nhi aati tujhe</p>
+            <button class="modal-close-btn font-bold bg-yellow-500 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-yellow-600">OK...</button>
+        </div>
+    </div>
+    <div id="gif-overlay" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[100]">
+        <img src="Soo.gif" alt="Final Animation" class="max-w-full max-h-full rounded-lg">
+    </div>
+    <script>
+        // Script remains the same, but the image loading will be improved by the HTML change below
+        const quizData = [
+            { question: "what is your age now ?", image: "cobbler.gif", answers: ["10", "22", "17", "80"], correct: "80" },
+            { question: "What is 10 + 10?", image: "tenor.gif", answers: ["20", "96", "8", "100"], correct: "20" },
+            { question: "Do u find me attractive?", image: "Smirk.gif", answers: ["Yes", "No"], correct: "Yes", isSpecial: true }
+        ];
+        const quizContent = document.getElementById('quiz-content'), resultContainer = document.getElementById('result-container'), questionEl = document.getElementById('question'), answersEl = document.getElementById('answers'), actionButtonsEl = document.getElementById('action-buttons'), scoreEl = document.getElementById('score'), redirectBtn = document.getElementById('redirect-btn'), wrongAnswerModal = document.getElementById('wrong-answer-modal'), skipWarningModal = document.getElementById('skip-warning-modal'), allModals = document.querySelectorAll('.modal-overlay');
+        let currentQuiz = 0, score = 0;
+        loadQuiz();
+        function loadQuiz() {
+            const existingImage = document.getElementById('question-image');
+            if (existingImage) existingImage.remove();
+            const currentQuizData = quizData[currentQuiz];
+            answersEl.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+            if (currentQuizData.image) {
+                const img = document.createElement('img');
+                img.id = 'question-image';
+                img.src = currentQuizData.image;
+                img.alt = "Quiz Image";
+                img.loading = "lazy"; // OPTIMIZATION: Lazy load quiz images
+                img.classList.add('mx-auto', 'mb-6', 'rounded-xl', 'shadow-lg', 'max-h-48');
+                questionEl.before(img);
+            }
+            questionEl.innerText = currentQuizData.question;
+            answersEl.innerHTML = '';
+            actionButtonsEl.innerHTML = '';
+            if (currentQuizData.isSpecial) { setupSpecialQuestion(currentQuizData); } 
+            else { setupStandardQuestion(currentQuizData); }
+        }
+        function setupStandardQuestion(data) {
+            data.answers.forEach(answerText => {
+                const button = createButton(answerText, () => selectAnswer(button, answerText, data.correct));
+                answersEl.appendChild(button);
+            });
+            actionButtonsEl.appendChild(createActionButton('Skip', skipQuestion));
+        }
+        function setupSpecialQuestion(data) {
+            answersEl.className = 'grid grid-cols-2 gap-4';
+            const yesButton = createButton('Yes', handleYesClick);
+            const noButton = createButton('No');
+            yesButton.classList.add('justify-self-end');
+            noButton.classList.add('justify-self-start');
+            [yesButton, noButton].forEach(b => { b.classList.remove('w-full', 'p-4'); b.classList.add('w-auto', 'px-10', 'py-2'); });
+            function activateAndMove(e) {
+                if (!e.target.classList.contains('moving-button')) { e.target.classList.add('moving-button'); }
+                moveButtonRandomly(e.target, yesButton);
+            }
+            noButton.addEventListener('mouseover', activateAndMove);
+            noButton.addEventListener('click', activateAndMove);
+            answersEl.appendChild(yesButton);
+            answersEl.appendChild(noButton);
+            actionButtonsEl.appendChild(createActionButton('Skip', () => showModal(skipWarningModal)));
+        }
+        function moveButtonRandomly(noBtn, yesBtn) {
+            const containerRect = answersEl.getBoundingClientRect(), noBtnRect = noBtn.getBoundingClientRect(), yesBtnRect = yesBtn.getBoundingClientRect();
+            const yesRelLeft = yesBtnRect.left - containerRect.left, yesRelTop = yesBtnRect.top - containerRect.top;
+            const maxX = containerRect.width - noBtnRect.width, maxY = containerRect.height - noBtnRect.height;
+            let randomX, randomY, isOverlapping, attempts = 0;
+            do {
+                randomX = Math.random() * maxX; randomY = Math.random() * maxY;
+                isOverlapping = (randomX < yesRelLeft + yesBtnRect.width && randomX + noBtnRect.width > yesRelLeft && randomY < yesRelTop + yesBtnRect.height && randomY + noBtnRect.height > yesRelTop);
+                attempts++;
+            } while (isOverlapping && attempts < 50);
+            noBtn.style.left = `${randomX}px`; noBtn.style.top = `${randomY}px`;
+        }
+        function handleYesClick() {
+            score++;
+            quizContent.innerHTML = `<img src="Shinchan blushing.gif" alt="Blushing" class="mx-auto mb-6 rounded-xl shadow-lg max-h-64" loading="lazy"><button id="submit-btn" class="font-bold bg-pink-500 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-pink-600 transform hover:scale-105">Submit Quiz</button>`;
+            document.getElementById('submit-btn').addEventListener('click', showResults);
+        }
+        function selectAnswer(button, selected, correct) {
+            if (selected === correct) {
+                score++; button.classList.add('correct');
+                answersEl.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                actionButtonsEl.innerHTML = '';
+                actionButtonsEl.appendChild(createActionButton('Next Question →', nextQuestion, ['bg-green-500', 'hover:bg-green-600']));
+            } else { showModal(wrongAnswerModal); }
+        }
+        function nextQuestion() { currentQuiz++; (currentQuiz < quizData.length) ? loadQuiz() : showResults(); }
+        function skipQuestion() { nextQuestion(); }
+        function showResults() {
+            quizContent.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            scoreEl.innerText = `You scored ${score} out of ${quizData.length}!`;
+        }
+        function createButton(text, onClick) {
+            const button = document.createElement('button');
+            button.innerText = text;
+            button.className = 'w-full font-bold bg-white/30 text-white p-4 rounded-xl shadow-lg transition-transform duration-300 quiz-option';
+            if(onClick) button.addEventListener('click', onClick);
+            return button;
+        }
+        function createActionButton(text, onClick, extraClasses = []) {
+            const button = document.createElement('button');
+            button.innerText = text;
+            button.className = 'font-bold text-white px-8 py-3 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300';
+            button.classList.add(...(extraClasses.length > 0 ? extraClasses : ['bg-white/20', 'hover:bg-white/30']));
+            button.addEventListener('click', onClick);
+            return button;
+        }
+        function showModal(modal) {
+            const modalBox = modal.querySelector('.modal-box');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalBox.classList.remove('opacity-0', 'scale-95');
+        }
+        function hideModal(modal) {
+            const modalBox = modal.querySelector('.modal-box');
+            modal.classList.add('opacity-0');
+            modalBox.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => modal.classList.add('pointer-events-none'), 300);
+        }
+        redirectBtn.addEventListener('click', () => {
+            const gifOverlay = document.getElementById('gif-overlay');
+            gifOverlay.classList.remove('hidden');
+            setTimeout(() => { window.location.href = 'last_piece.html'; }, 3000);
+        });
+        allModals.forEach(modal => {
+            modal.querySelector('.modal-close-btn').addEventListener('click', () => hideModal(modal));
+        });
+    </script>
+</body>
+</html>

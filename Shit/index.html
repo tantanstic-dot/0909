@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed Shero!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .drag-over {
+            border-style: dashed !important;
+            border-color: #34d399 !important;
+            transform: scale(1.02);
+        }
+        #dog-food {
+            touch-action: none; /* Prevents default touch behaviors like scrolling */
+        }
+    </style>
+</head>
+<body class="bg-sky-100 flex flex-col items-center justify-center min-h-screen p-4 transition-colors duration-500">
+    <div id="game-container" class="bg-white rounded-2xl shadow-xl p-6 md:p-10 w-full max-w-4xl text-center">
+        <div id="header">
+            <h1 class="text-3xl md:text-5xl font-bold text-slate-800">Shero is Hungry!</h1>
+            <p id="instruction" class="text-slate-600 mt-2 text-lg">Drag the food to Shero's bowl to feed him.</p>
+        </div>
+        <div class="mt-8 flex flex-col md:flex-row items-center justify-around gap-8 min-h-[400px]">
+            <div id="shero-container" class="transition-transform duration-300">
+                <img src="Shero cry.jpg" id="shero-image" class="rounded-xl border-4 border-transparent shadow-md max-w-xs w-full md:max-w-sm" alt="A crying dog named Shero">
+            </div>
+            <div id="food-container" class="cursor-grab transition-transform duration-200 active:cursor-grabbing active:scale-110">
+                <img src="Dog_Food-removebg-preview.png" id="dog-food" draggable="true" class="w-40 md:w-48" alt="A can of dog food">
+            </div>
+        </div>
+        <div class="mt-6">
+            <button id="next-button" class="hidden bg-emerald-500 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-emerald-600 transition-all transform hover:scale-105">
+                Next
+            </button>
+            <button id="finish-button" class="hidden bg-blue-500 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-blue-600 transition-all transform hover:scale-105">
+                Finish
+            </button>
+        </div>
+    </div>
+    <div id="final-sequence-container" class="hidden fixed inset-0 bg-black flex items-center justify-center z-50">
+        <img id="final-gif" src="" alt="Final Sequence" class="max-w-full max-h-full rounded-lg">
+    </div>
+
+    <script>
+        const sheroContainer = document.getElementById('shero-container');
+        const sheroImage = document.getElementById('shero-image');
+        const dogFood = document.getElementById('dog-food');
+        const nextButton = document.getElementById('next-button');
+        const header = document.getElementById('header');
+        const instruction = document.getElementById('instruction');
+        const finishButton = document.getElementById('finish-button');
+        const gameContainer = document.getElementById('game-container');
+        const finalSequenceContainer = document.getElementById('final-sequence-container');
+        const finalGif = document.getElementById('final-gif');
+
+        const sheroCrySrc = 'Shero cry.jpg';
+        const sheroEatGifSrc = 'Sherooooooooooooooo.gif';
+        const sheroFullSrc = 'Shero full (1).jpg';
+        const thankYouGifSrc = 'T H A N K U.gif';
+        const finalSequenceGifSrc = 'Untitled video - Made with Clipchamp.gif';
+
+        function handleSuccessfulDrop() {
+            sheroImage.src = sheroEatGifSrc + '?t=' + new Date().getTime();
+            sheroImage.classList.remove('drag-over');
+
+            // Make the food element invisible and non-interactive
+            dogFood.style.transition = 'opacity 0.5s, transform 0.5s';
+            dogFood.style.opacity = '0';
+            dogFood.style.pointerEvents = 'none'; // Prevents further interaction
+            
+            setTimeout(() => dogFood.classList.add('hidden'), 500);
+            instruction.textContent = "Great job! Shero is eating happily.";
+            nextButton.classList.remove('hidden');
+        }
+
+        // --- Desktop Drag & Drop (Unchanged) ---
+        dogFood.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', null) });
+        sheroContainer.addEventListener('dragover', (e) => { e.preventDefault(); sheroImage.classList.add('drag-over'); });
+        sheroContainer.addEventListener('dragleave', () => { sheroImage.classList.remove('drag-over'); });
+        sheroContainer.addEventListener('drop', (e) => { e.preventDefault(); handleSuccessfulDrop(); });
+
+        // --- Mobile Touch Drag & Drop (REVISED FOR SMOOTHNESS) ---
+        let isDragging = false;
+        let initialX, initialY;
+        let currentX = 0, currentY = 0;
+
+        const isOverlapping = (elem1, elem2) => {
+            const rect1 = elem1.getBoundingClientRect();
+            const rect2 = elem2.getBoundingClientRect();
+            return !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
+        };
+
+        dogFood.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            isDragging = true;
+            
+            // Get the initial touch position
+            initialX = e.touches[0].clientX - currentX;
+            initialY = e.touches[0].clientY - currentY;
+            
+            // Apply initial styles for dragging
+            dogFood.style.transition = 'transform 0.1s'; // Quick transition for pickup
+            dogFood.style.zIndex = '1000';
+            dogFood.style.transform = `translate(${currentX}px, ${currentY}px) scale(1.1)`;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging || e.touches.length !== 1) return;
+            e.preventDefault(); // Prevent scrolling while dragging
+
+            // Calculate the new position based on finger movement
+            currentX = e.touches[0].clientX - initialX;
+            currentY = e.touches[0].clientY - initialY;
+            
+            // Use CSS transform for smooth movement
+            dogFood.style.transform = `translate(${currentX}px, ${currentY}px) scale(1.1)`;
+
+            // Visual feedback for drop zone
+            if (isOverlapping(dogFood, sheroContainer)) {
+                sheroImage.classList.add('drag-over');
+            } else {
+                sheroImage.classList.remove('drag-over');
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            sheroImage.classList.remove('drag-over');
+            dogFood.style.zIndex = ''; // Reset z-index
+
+            if (isOverlapping(dogFood, sheroContainer)) {
+                handleSuccessfulDrop();
+            } else {
+                // Smoothly animate back to the original position
+                currentX = 0;
+                currentY = 0;
+                dogFood.style.transition = 'transform 0.3s ease-out';
+                dogFood.style.transform = 'translate(0px, 0px) scale(1)';
+            }
+        });
+        
+        // --- Game Progression Logic (Unchanged) ---
+        nextButton.addEventListener('click', () => {
+            sheroImage.src = sheroFullSrc;
+            header.innerHTML = '<h1 class="text-3xl md:text-5xl font-bold text-slate-800">All Done!</h1>';
+            instruction.textContent = "Shero is full and taking a nap. Thanks for helping!";
+            nextButton.classList.add('hidden');
+            finishButton.classList.remove('hidden');
+        });
+
+        finishButton.addEventListener('click', () => {
+            gameContainer.classList.add('hidden');
+            document.body.classList.remove('bg-sky-100');
+            document.body.classList.add('bg-black');
+            finalSequenceContainer.classList.remove('hidden');
+            setTimeout(() => { finalGif.src = thankYouGifSrc + '?t=' + new Date().getTime(); }, 500);
+            setTimeout(() => {
+                finalGif.src = finalSequenceGifSrc + '?t=' + new Date().getTime();
+                setTimeout(() => { window.location.href = 'birthday-surprise.html'; }, 5000);
+            }, 2500);
+        });
+    </script>
+</body>
+</html>
